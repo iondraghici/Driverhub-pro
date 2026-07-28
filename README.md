@@ -103,6 +103,34 @@ git push -u origin main
 
 ---
 
+## 🚀 GitHub Actions Deployment & Workflow Permissions
+
+### 1. 🔑 Fixing "Insufficient permissions to push workflow files" Error
+
+If you see an error like `Insufficient permissions to push workflow files` when syncing with GitHub from AI Studio:
+
+1. **Re-authorize GitHub App Permissions**:
+   - Go to your **GitHub Settings** > **Applications** > **Authorized GitHub Apps** (or **Installed GitHub Apps**).
+   - Find **Google AI Studio** / **AI Studio App**.
+   - Grant **Workflows (Read and Write)** permissions.
+2. **Alternative (Direct GitHub Web Upload)**:
+   - If syncing fails, you can create or edit `.github/workflows/deploy.yml` directly inside your repository on GitHub.com using the web code editor.
+   - Or push the file locally using standard Git CLI (`git push`).
+
+---
+
+## 🌐 Deploying to GitHub Pages
+
+This repository includes a pre-configured GitHub Actions workflow at `.github/workflows/deploy.yml`.
+
+### Setup Steps:
+1. Push your repository to GitHub (`main` or `master` branch).
+2. Open your repository on GitHub and navigate to **Settings** > **Pages**.
+3. Under **Build and deployment** > **Source**, select **GitHub Actions**.
+4. Every push to `main` will automatically build and publish your live app to GitHub Pages (`https://<username>.github.io/<repo-name>/`).
+
+---
+
 ## 📜 License
 
 Distributed under the MIT License. See `LICENSE` for details.

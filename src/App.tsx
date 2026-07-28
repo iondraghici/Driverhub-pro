@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LaptopProfile, DriverItem, LogMessage } from './types/driver';
+import { ToastMessage, ToastType } from './types/toast';
 import { LAPTOP_PROFILES } from './data/mockHardware';
 import { Header } from './components/Header';
 import { DriverManager } from './components/DriverManager';
@@ -8,6 +9,12 @@ import { BackupRestore } from './components/BackupRestore';
 import { AIDiagnosticAssistant } from './components/AIDiagnosticAssistant';
 import { HardwareProfiler } from './components/HardwareProfiler';
 import { ExecutionConsole } from './components/ExecutionConsole';
+import { ToastContainer } from './components/ToastContainer';
+import { 
+  getNotificationPermission, 
+  requestWebNotificationPermission, 
+  dispatchWebNotification 
+} from './utils/notifications';
 
 export default function App() {
   const [currentProfile, setCurrentProfile] = useState<LaptopProfile>(LAPTOP_PROFILES[0]);
@@ -16,6 +23,61 @@ export default function App() {
   const [isScanning, setIsScanning] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [installProgress, setInstallProgress] = useState(0);
+
+  // Toasts & Web Notification Permission State
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission | 'unsupported'>('default');
+
+  useEffect(() => {
+    setPermissionStatus(getNotificationPermission());
+  }, []);
+
+  const addToast = (title: string, message: string, type: ToastType = 'info', duration: number = 6000) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const newToast: ToastMessage = {
+      id,
+      title,
+      message,
+      type,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      duration
+    };
+
+    setToasts((prev) => [...prev, newToast]);
+
+    // Auto dismiss after duration
+    if (duration > 0) {
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, duration);
+    }
+  };
+
+  const handleDismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const handleRequestNotificationPermission = async () => {
+    const status = await requestWebNotificationPermission();
+    setPermissionStatus(status);
+
+    if (status === 'granted') {
+      addToast(
+        'Desktop Notifications Active',
+        'You will now receive native desktop browser alerts when driver installations complete or fail.',
+        'success'
+      );
+      dispatchWebNotification('DriverHub Pro Desktop Alerts', {
+        body: 'Desktop notifications successfully enabled!'
+      });
+    } else if (status === 'denied') {
+      addToast(
+        'Notifications Blocked',
+        'Browser desktop alerts are blocked. Please unblock notifications in your browser settings.',
+        'warning'
+      );
+    }
+  };
 
   const [logs, setLogs] = useState<LogMessage[]>([
     {
@@ -80,6 +142,12 @@ export default function App() {
     setInstallProgress(0);
     setActiveTab('logs');
 
+    addToast(
+      'Installation Started',
+      `Installing ${selectedDrivers.length} driver package(s) in WHQL sequence...`,
+      'info'
+    );
+
     addLog('=========================================================', 'cmd');
     addLog(`Initiating DriverHub Pro Batch Installation Sequence...`, 'cmd');
     addLog(`Creating System Restore Point: Checkpoint-Computer "DriverHub_PreInstall"...`, 'info');
@@ -116,8 +184,37 @@ export default function App() {
         addLog('=========================================================', 'success');
         addLog('All selected drivers installed successfully in the correct sequence!', 'success');
         addLog('System optimization complete. Hardware reboot is recommended if GPU/Chipset was updated.', 'info');
+
+        // Trigger Toast Notification
+        addToast(
+          'Driver Installation Complete 🚀',
+          `Successfully installed ${totalSteps} driver(s) on ${currentProfile.model}. System verified WHQL compliant.`,
+          'success',
+          8000
+        );
+
+        // Trigger Native Web Notification API
+        dispatchWebNotification('DriverHub Pro: Driver Installation Complete 🚀', {
+          body: `All ${totalSteps} driver packages were successfully installed on ${currentProfile.model}.`
+        });
       }
     }, 1200);
+  };
+
+  const handleSimulateError = () => {
+    addToast(
+      'Driver Installation Failed ⚠️',
+      `Error installing Intel VMD Storage Controller driver: Device Manager Code 10 (Device cannot start).`,
+      'error',
+      9000
+    );
+
+    addLog('ERROR: PnPUtil returned exit code 10 for Intel VMD Controller.', 'error');
+    addLog('Device Manager reported: Code 10 - This device cannot start.', 'error');
+
+    dispatchWebNotification('DriverHub Pro: Driver Installation Error ⚠️', {
+      body: `Error installing Intel VMD Storage Controller driver (Device Manager Code 10).`
+    });
   };
 
   const handleStartSimulatedOptimization = (options: OptimizerOptions) => {
@@ -143,6 +240,8 @@ export default function App() {
         missingCount={missingCount}
         onRefreshHardware={handleRefreshHardware}
         isScanning={isScanning}
+        notificationPermission={permissionStatus}
+        onRequestNotificationPermission={handleRequestNotificationPermission}
       />
 
       {/* Main Workspace */}
@@ -157,8 +256,10 @@ export default function App() {
             onStartInstallSequence={handleStartInstallSequence}
             onDownloadDriver={(drv) => {
               addLog(`Started download for ${drv.name} from ${drv.downloadUrl}`, 'info');
+              addToast('Download Initiated', `Downloading ${drv.name} package...`, 'info', 4000);
             }}
             isInstalling={isInstalling}
+            onSimulateError={handleSimulateError}
           />
         )}
 
@@ -210,6 +311,14 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Toast Notification Layer */}
+      <ToastContainer
+        toasts={toasts}
+        onDismiss={handleDismissToast}
+        permissionStatus={permissionStatus}
+        onRequestPermission={handleRequestNotificationPermission}
+      />
 
     </div>
   );

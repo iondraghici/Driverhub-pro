@@ -16,7 +16,8 @@ import {
   Zap,
   Info,
   Sliders,
-  Play
+  Play,
+  AlertTriangle
 } from 'lucide-react';
 
 interface DriverManagerProps {
@@ -27,6 +28,7 @@ interface DriverManagerProps {
   onStartInstallSequence: (selectedDrivers: DriverItem[]) => void;
   onDownloadDriver: (driver: DriverItem) => void;
   isInstalling: boolean;
+  onSimulateError?: () => void;
 }
 
 export const DriverManager: React.FC<DriverManagerProps> = ({
@@ -36,7 +38,8 @@ export const DriverManager: React.FC<DriverManagerProps> = ({
   onSelectAll,
   onStartInstallSequence,
   onDownloadDriver,
-  isInstalling
+  isInstalling,
+  onSimulateError
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<DriverCategory | 'All'>('All');
@@ -122,6 +125,18 @@ export const DriverManager: React.FC<DriverManagerProps> = ({
                 Create Restore Point
               </label>
             </div>
+
+            {onSimulateError && (
+              <button
+                onClick={onSimulateError}
+                disabled={isInstalling}
+                className="inline-flex items-center space-x-1.5 px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 font-semibold text-xs rounded-xl transition active:scale-95 disabled:opacity-50"
+                title="Test error alert toast and desktop notification"
+              >
+                <AlertTriangle className="h-3.5 w-3.5 text-rose-400" />
+                <span>Simulate Error Alert</span>
+              </button>
+            )}
 
             <button
               onClick={() => {

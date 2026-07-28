@@ -14,7 +14,9 @@ import {
   Cpu as CpuIcon, 
   Terminal,
   RefreshCw,
-  Zap
+  Zap,
+  Bell,
+  BellOff
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -26,6 +28,8 @@ interface HeaderProps {
   missingCount: number;
   onRefreshHardware: () => void;
   isScanning: boolean;
+  notificationPermission: NotificationPermission | 'unsupported';
+  onRequestNotificationPermission: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -36,7 +40,9 @@ export const Header: React.FC<HeaderProps> = ({
   updateCount,
   missingCount,
   onRefreshHardware,
-  isScanning
+  isScanning,
+  notificationPermission,
+  onRequestNotificationPermission
 }) => {
   return (
     <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 shadow-xl text-slate-100">
@@ -87,6 +93,42 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Model Switcher Dropdown & Hardware Quick Summary */}
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
             
+            {/* Notification API Toggle */}
+            <button
+              onClick={onRequestNotificationPermission}
+              className={`inline-flex items-center space-x-1.5 px-3 py-1.5 border rounded-lg text-xs font-semibold transition active:scale-95 ${
+                notificationPermission === 'granted'
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25'
+                  : notificationPermission === 'denied'
+                  ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 hover:bg-rose-500/25'
+                  : 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/25'
+              }`}
+              title={
+                notificationPermission === 'granted'
+                  ? 'Desktop Web Notifications Enabled'
+                  : notificationPermission === 'denied'
+                  ? 'Desktop Notifications Blocked in Browser Settings'
+                  : 'Enable Desktop Web Notifications'
+              }
+            >
+              {notificationPermission === 'granted' ? (
+                <>
+                  <Bell className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>Alerts Active</span>
+                </>
+              ) : notificationPermission === 'denied' ? (
+                <>
+                  <BellOff className="h-3.5 w-3.5 text-rose-400" />
+                  <span>Alerts Blocked</span>
+                </>
+              ) : (
+                <>
+                  <Bell className="h-3.5 w-3.5 text-indigo-400 animate-bounce" />
+                  <span>Enable Desktop Alerts</span>
+                </>
+              )}
+            </button>
+
             {/* Rescan Button */}
             <button
               onClick={onRefreshHardware}
