@@ -16,14 +16,15 @@ import {
   RefreshCw,
   Zap,
   Bell,
-  BellOff
+  BellOff,
+  Package
 } from 'lucide-react';
 
 interface HeaderProps {
   currentProfile: LaptopProfile;
   onSelectProfile: (profile: LaptopProfile) => void;
-  activeTab: 'manager' | 'optimizer' | 'backup' | 'ai' | 'hardware' | 'logs';
-  setActiveTab: (tab: 'manager' | 'optimizer' | 'backup' | 'ai' | 'hardware' | 'logs') => void;
+  activeTab: 'manager' | 'optimizer' | 'exe' | 'backup' | 'ai' | 'hardware' | 'logs';
+  setActiveTab: (tab: 'manager' | 'optimizer' | 'exe' | 'backup' | 'ai' | 'hardware' | 'logs') => void;
   updateCount: number;
   missingCount: number;
   onRefreshHardware: () => void;
@@ -219,6 +220,21 @@ export const Header: React.FC<HeaderProps> = ({
             <span>One-Click "Optimize Windows"</span>
             <span className="bg-indigo-500/20 text-indigo-300 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
               Auto Script
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('exe')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold transition whitespace-nowrap ${
+              activeTab === 'exe'
+                ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            }`}
+          >
+            <Package className="h-4 w-4 text-cyan-400" />
+            <span>EXE Auto-Installer Builder</span>
+            <span className="bg-cyan-500/20 text-cyan-300 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+              .EXE / .BAT
             </span>
           </button>
 

@@ -5,6 +5,7 @@ import { LAPTOP_PROFILES } from './data/mockHardware';
 import { Header } from './components/Header';
 import { DriverManager } from './components/DriverManager';
 import { OneClickOptimizer, OptimizerOptions } from './components/OneClickOptimizer';
+import { ExeInstallerBuilder } from './components/ExeInstallerBuilder';
 import { BackupRestore } from './components/BackupRestore';
 import { AIDiagnosticAssistant } from './components/AIDiagnosticAssistant';
 import { HardwareProfiler } from './components/HardwareProfiler';
@@ -19,7 +20,7 @@ import {
 export default function App() {
   const [currentProfile, setCurrentProfile] = useState<LaptopProfile>(LAPTOP_PROFILES[0]);
   const [drivers, setDrivers] = useState<DriverItem[]>(LAPTOP_PROFILES[0].drivers);
-  const [activeTab, setActiveTab] = useState<'manager' | 'optimizer' | 'backup' | 'ai' | 'hardware' | 'logs'>('manager');
+  const [activeTab, setActiveTab] = useState<'manager' | 'optimizer' | 'exe' | 'backup' | 'ai' | 'hardware' | 'logs'>('manager');
   const [isScanning, setIsScanning] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [installProgress, setInstallProgress] = useState(0);
@@ -269,6 +270,21 @@ export default function App() {
             drivers={drivers}
             onStartSimulatedOptimization={handleStartSimulatedOptimization}
             isInstalling={isInstalling}
+          />
+        )}
+
+        {activeTab === 'exe' && (
+          <ExeInstallerBuilder
+            currentProfile={currentProfile}
+            drivers={drivers}
+            onStartSimulatedExecution={() => {
+              setActiveTab('logs');
+              handleStartInstallSequence(drivers);
+            }}
+            onDownloadScript={(filename) => {
+              addToast('EXE Builder Script Downloaded', `Downloaded ${filename} successfully.`, 'success', 5000);
+              addLog(`Downloaded EXE installer script: ${filename}`, 'success');
+            }}
           />
         )}
 
