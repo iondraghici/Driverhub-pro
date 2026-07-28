@@ -31,6 +31,8 @@ interface HeaderProps {
   isScanning: boolean;
   notificationPermission: NotificationPermission | 'unsupported';
   onRequestNotificationPermission: () => void;
+  autoInstallPromptEnabled?: boolean;
+  onToggleAutoInstallPrompt?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -43,7 +45,9 @@ export const Header: React.FC<HeaderProps> = ({
   onRefreshHardware,
   isScanning,
   notificationPermission,
-  onRequestNotificationPermission
+  onRequestNotificationPermission,
+  autoInstallPromptEnabled = true,
+  onToggleAutoInstallPrompt
 }) => {
   return (
     <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 shadow-xl text-slate-100">
@@ -134,12 +138,32 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onRefreshHardware}
               disabled={isScanning}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 rounded-lg text-xs font-medium text-slate-200 transition shadow-sm active:scale-95 disabled:opacity-50"
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-slate-800 to-slate-800/90 hover:from-slate-700 hover:to-slate-700 border border-cyan-500/30 rounded-lg text-xs font-semibold text-cyan-200 transition shadow-sm active:scale-95 disabled:opacity-50"
               title="Rescan PnP hardware bus and Device Manager"
             >
               <RefreshCw className={`h-3.5 w-3.5 text-cyan-400 ${isScanning ? 'animate-spin' : ''}`} />
-              <span>{isScanning ? 'Scanning PnP Bus...' : 'Rescan Hardware'}</span>
+              <span>{isScanning ? 'Analyzing System...' : 'Scan System & Detect Updates'}</span>
             </button>
+
+            {/* Auto-Prompt Permission Toggle */}
+            {onToggleAutoInstallPrompt && (
+              <button
+                onClick={onToggleAutoInstallPrompt}
+                className={`inline-flex items-center space-x-1.5 px-3 py-1.5 border rounded-lg text-xs font-semibold transition active:scale-95 ${
+                  autoInstallPromptEnabled
+                    ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/25'
+                    : 'bg-slate-800/80 border-slate-700/60 text-slate-400 hover:text-slate-200'
+                }`}
+                title={
+                  autoInstallPromptEnabled
+                    ? 'Auto-Prompt enabled: asks permission to install new drivers automatically after scan'
+                    : 'Auto-Prompt disabled'
+                }
+              >
+                <Zap className={`h-3.5 w-3.5 ${autoInstallPromptEnabled ? 'text-cyan-400 animate-pulse' : 'text-slate-400'}`} />
+                <span>{autoInstallPromptEnabled ? 'Auto-Prompt: ON' : 'Auto-Prompt: OFF'}</span>
+              </button>
+            )}
 
             {/* Desktop Model Selector */}
             <div className="hidden md:flex items-center space-x-2 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-1.5">

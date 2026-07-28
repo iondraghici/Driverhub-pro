@@ -11,6 +11,7 @@ import { AIDiagnosticAssistant } from './components/AIDiagnosticAssistant';
 import { HardwareProfiler } from './components/HardwareProfiler';
 import { ExecutionConsole } from './components/ExecutionConsole';
 import { ToastContainer } from './components/ToastContainer';
+import { AutoUpdatePromptModal } from './components/AutoUpdatePromptModal';
 import { 
   getNotificationPermission, 
   requestWebNotificationPermission, 
@@ -24,6 +25,10 @@ export default function App() {
   const [isScanning, setIsScanning] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [installProgress, setInstallProgress] = useState(0);
+
+  // Auto-Update Permission State
+  const [autoInstallPromptEnabled, setAutoInstallPromptEnabled] = useState(true);
+  const [showAutoUpdateModal, setShowAutoUpdateModal] = useState(false);
 
   // Toasts & Web Notification Permission State
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -133,7 +138,62 @@ export default function App() {
     setTimeout(() => {
       setIsScanning(false);
       addLog('Hardware rescan finished. Device instance paths refreshed.', 'success');
+
+      // Check for new/outdated drivers
+      const pending = drivers.filter(
+        (d) => d.status === 'Update Available' || d.status === 'Missing'
+      );
+
+      if (pending.length > 0 && autoInstallPromptEnabled) {
+        setShowAutoUpdateModal(true);
+        addLog(
+          `[System Analysis] Identified ${pending.length} new/outdated driver package(s). Prompting user for auto-installation permission.`,
+          'info'
+        );
+        addToast(
+          'New Driver Updates Found',
+          `System scan identified ${pending.length} driver update(s). Requesting permission...`,
+          'info',
+          6000
+        );
+        dispatchWebNotification('DriverHub Pro: Driver Updates Identified', {
+          body: `Found ${pending.length} driver package update(s) for ${currentProfile.model}.`
+        });
+      } else if (pending.length === 0) {
+        addToast(
+          'System Up to Date',
+          'All installed drivers are WHQL verified and up to date.',
+          'success',
+          4000
+        );
+      }
     }, 1500);
+  };
+
+  const handleApproveAutoInstall = (driversToInstall: DriverItem[]) => {
+    setShowAutoUpdateModal(false);
+    addLog(
+      `[Permission Granted] User approved auto-installation of ${driversToInstall.length} driver package(s).`,
+      'success'
+    );
+    
+    // Mark those drivers as selected
+    setDrivers((prev) =>
+      prev.map((d) =>
+        d.status === 'Update Available' || d.status === 'Missing'
+          ? { ...d, selected: true }
+          : d
+      )
+    );
+
+    // Trigger batch installation
+    handleStartInstallSequence(driversToInstall);
+  };
+
+  const handleReviewManually = () => {
+    setShowAutoUpdateModal(false);
+    setActiveTab('manager');
+    addLog('User chose to review driver updates manually.', 'info');
   };
 
   const handleStartInstallSequence = (selectedDrivers: DriverItem[]) => {
@@ -243,6 +303,8 @@ export default function App() {
         isScanning={isScanning}
         notificationPermission={permissionStatus}
         onRequestNotificationPermission={handleRequestNotificationPermission}
+        autoInstallPromptEnabled={autoInstallPromptEnabled}
+        onToggleAutoInstallPrompt={() => setAutoInstallPromptEnabled((prev) => !prev)}
       />
 
       {/* Main Workspace */}
@@ -327,6 +389,16 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Permission Modal for Auto Driver Updates */}
+      <AutoUpdatePromptModal
+        isOpen={showAutoUpdateModal}
+        onClose={() => setShowAutoUpdateModal(false)}
+        onApproveAndInstall={handleApproveAutoInstall}
+        onReviewManually={handleReviewManually}
+        profile={currentProfile}
+        drivers={drivers}
+      />
 
       {/* Toast Notification Layer */}
       <ToastContainer
