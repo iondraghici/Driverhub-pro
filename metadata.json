@@ -1,0 +1,6 @@
+{
+  "name": "DriverHub Pro",
+  "description": "Comprehensive Windows Hardware Driver Manager, Auto-Installer, Hardware Diagnostic & Optimization Suite",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
